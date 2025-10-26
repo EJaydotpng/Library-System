@@ -1,11 +1,20 @@
-<img width="1535" height="392" alt="image" src="https://github.com/user-attachments/assets/28c3ed4c-651b-4b05-a81c-8605b9167a35" /># LibrarySys Documentation
+# LibrarySys Documentation
 
 ## Overview
 
 **LibrarySys** is a web-based library management system built with Laravel. It provides features for librarians and members to manage books, users, and transactions efficiently.
 ---
 
-``Use `code` in your Markdown file.``
+1. Open the file.
+2. Find the following code block on line 21:
+
+        <html>
+          <head>
+            <title>Test</title>
+          </head>
+
+3. Update the title to match the name of your website.
+
 
 ## Features
 
