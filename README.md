@@ -3,9 +3,20 @@
 ## Overview
 
 **LibrarySys** is a web-based library management system built with Laravel. It provides features for librarians and members to manage books, users, and transactions efficiently.
+
 ---
 
-## Features
+## Objectives
+
+- To provide an efficient and user-friendly platform for managing library resources.
+- To automate book borrowing, returning, and inventory tracking.
+- To enable role-based access for librarians and members.
+- To generate reports and track user transactions.
+- To enhance learning in system integration and architecture using Laravel.
+
+---
+
+## Features / Functionality
 
 ### Authentication & Roles
 - **Login/Register:** Members can register and login. Librarians are added by administrators.
@@ -23,7 +34,7 @@
 
 ---
 
-## Installation
+## Installation Instructions
 
 1. **Clone the repository:**
    ```sh
@@ -72,6 +83,34 @@
 
 ---
 
+## Code Snippets
+
+### Authentication Controller (Login & Register)
+````php
+// filepath: [AuthController.php](http://_vscodecontentref_/0)
+public function login(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+
+    if (Auth::attempt($request->only('email', 'password'))) {
+        $request->session()->regenerate();
+        $user = Auth::user();
+        if ($user->role_id == 1){
+            return redirect()->route('librarian.dashboard');
+        } elseif ($user->role_id == 2){
+            return redirect()->route('member.dashboard');
+        }
+    }
+    throw ValidationException::withMessages([
+        'email' => ['The provided credentials do not match our records.'],
+    ]);
+}
+
+---
+
 ## Folder Structure
 
 - `app/Models`: Eloquent models (`User`, `Book`, `Transaction`, `Role`, `Fine`)
@@ -93,17 +132,9 @@
 
 ---
 
-## Development
 
-- **Testing:** Run unit and feature tests with:
-  ```sh
-  php artisan test
-  ```
-- **Styling:** Uses Tailwind CSS (see `vite.config.js`).
+## Contributors
 
----
-
-
-## Authors
+- **Santiago Elija R. Sabulao Jr.**
 
 - Developed for DMMMSU System Integration and Architecture 2 (AY 2025-26).
