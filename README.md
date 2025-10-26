@@ -109,6 +109,133 @@ public function login(Request $request)
     ]);
 }
 
+````
+
+### Book Management
+#### List All Books
+````php
+public function index()
+{
+    $books = Book::paginate(10);
+    return view('librarian.bookManagement', compact('books'));
+}
+````
+
+#### Create/Save Book
+````php
+public function store(Request $request)
+{
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'author' => 'required|string|max:255',
+        'isbn' => 'required|string|max:255|unique:books',
+        'category' => 'nullable|string|max:255',
+        'quantity_total' => 'required|integer|min:0',
+    ]);
+
+    Book::create([
+        'title' => $request->title,
+        'author' => $request->author,
+        'isbn' => $request->isbn,
+        'category' => $request->category,
+        'quantity_total' => $request->quantity_total,
+        'quantity_available' => $request->quantity_total,
+    ]);
+
+    return redirect()->route('books.index')->with('success', 'Book added successfully.');
+}
+````
+
+#### Edit/Update Book
+````php
+public function update(Request $request, $book_id)
+{
+    $book = Book::findOrFail($book_id);
+
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'author' => 'required|string|max:255',
+        'isbn' => 'required|string|max:255|unique:books,isbn,' . $book->book_id . ',book_id',
+        'category' => 'nullable|string|max:255',
+        'quantity_total' => 'required|integer|min:0',
+    ]);
+
+    // Adjust available quantity if total is changed
+    $diff = $request->quantity_total - $book->quantity_total;
+    $book->quantity_total = $request->quantity_total;
+    $book->quantity_available += $diff;
+
+    $book->title = $request->title;
+    $book->author = $request->author;
+    $book->isbn = $request->isbn;
+    $book->category = $request->category;
+    $book->save();
+
+    return redirect()->route('books.index')->with('success', 'Book updated successfully.');
+}
+````
+#### Delete Book
+````php
+public function destroy($book_id)
+{
+    $book = Book::findOrFail($book_id);
+    $book->delete();
+    return redirect()->route('books.index')->with('success', 'Book deleted successfully.');
+}
+````
+
+### Authentication Controller (Login & Register)
+#### Store new Borrow Transaction
+````php
+public function store(Request $request)
+{
+    $request->validate([
+        'user_id' => 'required|exists:users,user_id',
+        'book_id' => 'required|exists:books,book_id',
+        'borrow_date' => 'required|date',
+        'due_date' => 'required|date|after_or_equal:borrow_date',
+        'quantity' => 'required|integer|min:1',
+    ]);
+
+    $book = Book::findOrFail($request->book_id);
+
+    if ($book->quantity_available < $request->quantity) {
+        return back()->withErrors(['quantity' => 'Not enough copies available.']);
+    }
+
+    $book->quantity_available -= $request->quantity;
+    $book->save();
+
+    Transaction::create([
+        'user_id' => $request->user_id,
+        'book_id' => $request->book_id,
+        'borrow_date' => $request->borrow_date,
+        'due_date' => $request->due_date,
+        'status' => 'borrowed',
+        'quantity' => $request->quantity,
+    ]);
+
+    return redirect()->route('transactions.create')->with('success', 'Transaction saved!');
+}
+````
+#### Store new Borrow Transaction
+````php
+public function returnBook($transaction_id)
+{
+    $transaction = Transaction::findOrFail($transaction_id);
+    $transaction->status = 'returned';
+    $transaction->return_date = now();
+    $transaction->save();
+
+    $book = Book::find($transaction->book_id);
+    if ($book) {
+        $book->quantity_available += $transaction->quantity;
+        $book->save();
+    }
+
+    return redirect()->route('transactions.create')->with('success', 'Book returned successfully!');
+}
+````
 ---
 
 ## Folder Structure
